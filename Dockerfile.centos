@@ -1,0 +1,22 @@
+FROM paleozogt/centos:7-ppc64
+
+RUN yum groupinstall -y 'Development Tools' \
+ && yum install -y \
+    glibc-devel.ppc \
+    glibc-devel.ppc64 \
+    glibc-static.ppc \
+    glibc-static.ppc64 \
+    libgcc.ppc \
+    libgcc.ppc64 \
+    libstdc++-devel.ppc \
+    libstdc++-devel.ppc64 \
+    libstdc++-static.ppc \
+    libstdc++-static.ppc64
+
+RUN echo 'int main() { return 0; }' > /tmp/helloworld.c
+
+RUN gcc -m32 /tmp/helloworld.c -o helloworld.ppc
+RUN gcc -m64 /tmp/helloworld.c -o helloworld.ppc64
+
+RUN gcc -m32 --static /tmp/helloworld.c -o helloworld.static.ppc
+RUN gcc -m64 --static /tmp/helloworld.c -o helloworld.static.ppc64

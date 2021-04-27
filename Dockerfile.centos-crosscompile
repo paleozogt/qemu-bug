@@ -1,0 +1,55 @@
+FROM centos:7
+
+RUN yum install -y epel-release
+
+RUN yum groupinstall -y 'Development Tools'
+RUN yum install -y \
+        binutils-powerpc64-linux-gnu.x86_64 \
+        gcc-powerpc64-linux-gnu.x86_64 \
+        gcc-c++-powerpc64-linux-gnu
+
+# while centos has cross-compilers, it doesn't have cross glibc,
+# so we need to setup the cross environment by manually downloading rpms
+RUN yum install -y wget
+ARG REPO_URL=https://vault.centos.org/altarch/7.2.1511/updates/ppc64/Packages
+
+# setup the 32-bit cross environment
+ARG CROSS32_HOME=/opt/powerpc-linux-gnu
+RUN mkdir -p $CROSS32_HOME && cd $CROSS32_HOME \
+ && wget $REPO_URL/glibc-2.17-106.el7_2.8.ppc.rpm \
+ && rpm2cpio *.rpm | cpio -idmv \
+ && rm *.rpm \
+ && wget $REPO_URL/glibc-headers-2.17-106.el7_2.8.ppc64.rpm \
+ && rpm2cpio *.rpm | cpio -idmv \
+ && rm *.rpm \
+ && wget $REPO_URL/glibc-devel-2.17-106.el7_2.8.ppc.rpm \
+ && rpm2cpio *.rpm | cpio -idmv \
+ && rm *.rpm \
+ && wget $REPO_URL/glibc-static-2.17-106.el7_2.8.ppc.rpm \
+ && rpm2cpio *.rpm | cpio -idmv \
+ && rm *.rpm
+
+# setup the 64-bit cross environment
+ARG CROSS64_HOME=/opt/powerpc64-linux-gnu
+RUN mkdir -p $CROSS64_HOME && cd $CROSS64_HOME \
+ && wget $REPO_URL/glibc-2.17-106.el7_2.8.ppc64.rpm \
+ && rpm2cpio *.rpm | cpio -idmv \
+ && rm *.rpm \
+ && wget $REPO_URL/glibc-headers-2.17-106.el7_2.8.ppc64.rpm \
+ && rpm2cpio *.rpm | cpio -idmv \
+ && rm *.rpm \
+ && wget $REPO_URL/glibc-devel-2.17-106.el7_2.8.ppc64.rpm \
+ && rpm2cpio *.rpm | cpio -idmv \
+ && rm *.rpm \
+ && wget $REPO_URL/glibc-static-2.17-106.el7_2.8.ppc64.rpm \
+ && rpm2cpio *.rpm | cpio -idmv \
+ && rm *.rpm \
+ && cd $CROSS64_HOME/usr && ln -s lib64 lib
+
+RUN echo 'int main() { return 0; }' > /tmp/helloworld.c
+
+RUN powerpc64-linux-gnu-gcc --sysroot $CROSS32_HOME -m32 /tmp/helloworld.c -o helloworld.ppc
+RUN powerpc64-linux-gnu-gcc --sysroot $CROSS64_HOME -m64 /tmp/helloworld.c -o helloworld.ppc64
+
+RUN powerpc64-linux-gnu-gcc --sysroot $CROSS32_HOME -m32 --static /tmp/helloworld.c -o helloworld.static.ppc
+RUN powerpc64-linux-gnu-gcc --sysroot $CROSS64_HOME -m64 --static /tmp/helloworld.c -o helloworld.static.ppc64

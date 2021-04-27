@@ -1,0 +1,17 @@
+# saucy has glibc 2.17, which is the same as centos:7
+FROM ubuntu:saucy
+
+RUN sed -i 's/archive/old-releases/' /etc/apt/sources.list
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    file \
+    g++-4.8-powerpc-linux-gnu \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN echo 'int main() { return 0; }' > /tmp/helloworld.c
+
+RUN powerpc-linux-gnu-gcc-4.8 /tmp/helloworld.c -o helloworld.ppc
+
+RUN powerpc-linux-gnu-gcc-4.8 --static /tmp/helloworld.c -o helloworld.static.ppc
+

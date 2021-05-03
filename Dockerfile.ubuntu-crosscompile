@@ -1,0 +1,13 @@
+FROM ubuntu:bionic
+ARG TRIPLET
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    file \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN if [ $TRIPLET != $(gcc -dumpmachine) ]; then \
+    apt-get update && apt-get install -y \
+        g++-$TRIPLET \
+    && rm -rf /var/lib/apt/lists/* \
+; fi
